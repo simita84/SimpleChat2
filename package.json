@@ -1,0 +1,9 @@
+{
+  "name": "SimpleChat",
+  "description": "For simple socket based chat",
+  "dependencies": {
+    "socket.io": "latest",
+    "ejs": "1.0.0",
+    "express": "~4.10.0"
+  }
+}
