@@ -64,7 +64,7 @@ var index = 1;
 io.sockets.on('connection', function (socket) {
     //all the socket code goes in here!
 
-    
+
   // #1 - New user connected recieving event
 
 	socket.on("got_new_user", function (data){
@@ -98,13 +98,14 @@ io.sockets.on('connection', function (socket) {
 
  //   // , coun#-------Listens to new chat
 			
-	// socket.on('new_chat' , function(data){
- //  	console.log(data.message);
- //  	console.log(  socket.session_id );
- //  	user_name = all_users[socket.session_id].name;
- //  	io.emit('add_new_chat', {chat : data.message,name : user_name});
- //  });	
-// 
+	socket.on('new_chat' , function(data){
+  	console.log(data.message);
+  	console.log(  socket.session_id );
+  	var user_name = all_users[socket.session_id].name;
+      console.log(  user_name );
+  	io.emit('add_new_chat', {chat : data.message, name : user_name});
+  });	
+
 
   //Listens to disconnect event
   socket.on('disconnect', function () {

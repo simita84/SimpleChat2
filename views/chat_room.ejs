@@ -111,20 +111,23 @@
            //     };
            //   });
 
-           //  $('#chat').submit(function(e){
-           //      e.preventDefault();
-           //      var new_chat = $('#chat_topic').val();
-           //      socket.emit('new_chat',{message :  new_chat});
-           //      console.log(new_chat);
-           //  });
+            $('#chat').submit(function(e){
+                e.preventDefault();
+                var new_chat = $('#chat_topic').val();
+                socket.emit('new_chat',{message :  new_chat});
+                console.log(new_chat);
+                this.reset();
+            });
 
-           //  socket.on('add_new_chat',function(data){
-           //    $('.chats textarea').append("<strong>"+data.name+"</strong> says : "+data.chat+ new Date());
-           //  });
+            socket.on('add_new_chat',function(data){
+              console.log(data.name);
+              $('.chats textarea').append(data.name +  " says : "+ data.chat + " @ " + new Date()+"\n");
+            });
+
         })
 
         // setInterval(function display_time(){
-        //               time = new Date();
+        //               time = new Date(); 
         //               $('.time').text(time);}, 1000);
     </script>
 </head>
