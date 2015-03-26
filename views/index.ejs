@@ -2,114 +2,21 @@
 <head>
 <title>Home</title>
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-    <script type ="text/javascript" src="/socket.io/socket.io.js"></script>
     <link rel="stylesheet" type="text/css" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
-    
-    <style type="text/css">
-       #users .col-md-2
-       {
-          border: 2px solid black;
-          margin: 10px;    
-          height: 100px;      
-        }
-       #users  h4{
-          border: 2px solid black;
-       }
-    </style>
-    <script>
-        $(document).ready(function (){
-           $('.conversation').hide();
-            // this triggers the connection event in our server!
-            var socket = io.connect();
-
-           //Events
-
-           // #1 - New user connected emit
-            $(".welcome_user").on("click",'.btn',function(){
-                user_name = prompt("Enter name");
-                socket.emit("got_new_user",{user_name : user_name});
-                $('.welcome_user button').hide();
-                $('.conversation').fadeIn();
-            });
-           
-           
-           // #--------------Adding new user-------------------------
-            socket.on('add_user_window', function (data){ 
-              if(!(data.user_info.name.length === 0) )
-              {
-                $('#users').append("<div class='col-md-2' id='"+data.user_info.id+"'></div>");
-
-                $( "#"+data.user_info.id+"").fadeIn( "slow", function() {
-                     $(this).html("<h4>"+
-                                     data.user_info.name+
-                                  "</h4>");
-                 });
-                $('.alert-success').html("<p>"+data.user_info.name+"added to the room"+"</p>")
-              }   
-            });
-
-            //#---------------------User disconnected--------------------
-            socket.on('remove_user',function(data){
-              $('.alert-success').html("<p>"+data.user_info.name+" left  the room !!!"+"</p>")
-              $( "#"+data.user_info.id+"").fadeOut("slow",function(){
-
-              });
-            });
-
-            socket.on('all_users',function(data){
-             for (var i = 0; i < data.user_info.length; i++) {
-              console.log( data.user_info[i].name);
-              $('#users').append("<div class='col-md-2' id='"+data.user_info[i].id+"'>"+
-                                  "</div>");
-                $( "#"+data.user_info[i].id+"").html("<p>"+
-                                     data.user_info[i].name+
-                                   "</p>");
-               };
-             });
-
-            $('#chat').submit(function(e){
-                e.preventDefault();
-                var new_chat = $('#chat_topic').val();
-                socket.emit('new_chat',{message :  new_chat});
-                console.log(new_chat);
-            });
-
-            socket.on('add_new_chat',function(data){
-
-              console.log(data.id +"says : "+data.chat+"<br>");
-              $('.chats').after("<p>"+"<strong>"+data.name+"</strong> says : "+data.chat+"</p>");
-            });
-          
-        })
-    </script>
 </head>
 <body class="container">
-    <h1 class="page-header">Chat Application</h1>
-    <div class="row" id="users">
-    </div> 
-    <div class="alert-success">
-    </div>
+    <h1 class="page-header">Welcome to Chat Application</h1>
+    <% if(typeof (message) !== 'undefined'){%>
+      <h3 class="alert-success"><%= message %></h3>
+    <% }%>
     <div class="row">
         <div class="col-md-8 col-md-offset-2">
-            <div class="welcome_user">
-              <button class="btn">Enter chat room</button>
-           </div>
+          <form action="/chat_room" method="post" class="well">
+                <label>Enter name</label>
+                <input type="text" name="name">
+                <input type="submit" value="Enter Chat" class="btn btn-success">
+              </form>
         </div>
     </div>
-    <div class="row conversation">
-      <div class="col-md-5">
-        <h3><u>Conversation Board</u></h3>
-        <div class="chats">
-          
-        </div>
-        <form id="chat">
-          <input name="chat_topic" id="chat_topic">
-          <input type="submit">
-        </form>
-      </div>
-    </div>
-  
-   
-    <!-- web page goes here -->
 </body>
 </html>

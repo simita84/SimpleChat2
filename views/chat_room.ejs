@@ -1,0 +1,154 @@
+<html>
+<head>
+<title>Home</title>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script type ="text/javascript" src="/socket.io/socket.io.js"></script>
+    <link rel="stylesheet" type="text/css" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+    
+    <style type="text/css">
+       #users .col-md-2
+       {
+          border: 2px solid black;
+          margin: 10px;    
+          height: 100px;      
+        }
+       #users  h4{
+          border: 2px solid black;
+       }
+       .chats{
+        padding: 20px;
+       }
+       .chats textarea{
+        margin: 10px;
+        border: 2px solid grey;
+        padding: 10px;
+        height: 200px;
+        width: 300px;
+       }
+       .chats form{
+        display: inline;
+        vertical-align: top;
+        margin-top: 2px;
+       }
+       .chats form input{
+        margin-bottom: 10px;
+       }
+       #chat_topic{
+         width: 300px;
+       }
+    </style>
+    <script>
+        $(document).ready(function (){          
+            // this triggers the connection event in our server!
+            var socket = io.connect();
+            var chat_name = $('#chat_name').text();
+            //console.log("nameee"+chat_name);  
+            socket.emit('got_new_user',{user_name:chat_name});
+
+            //New user
+            socket.on('new_user_connected',function(data){
+              console.log("new user"+data);
+              $('#users').append("<div class='col-md-2' id='"+data.user_details.socket_id+"'></div>");
+                $( "#"+data.user_details.socket_id+"").fadeIn( "slow", function() {
+                     $(this).html("<h4>"+
+                                     data.user_details.name+
+                                  "</h4>");
+                 });
+                $('.alert-success').html("<p>"+data.user_details.name+"added to the room"+"</p>")
+            })
+
+            //All users
+            socket.on('all_users',function(data){
+              var users = data.existing_users;
+              for (var index = 1; index < users.length; index++) {
+                 if(users[index]){
+
+                  $('#users').append("<div class='col-md-2' id='"+users[index].socket_id+"'></div>");
+                  
+                  $( "#"+users[index].socket_id+"").html("<h4>"+
+                                                                  users[index].name+
+                                                                "</h4>");
+                   
+                  console.log(users[index]);
+
+                 }
+               
+               }
+            });
+
+           // // #--------------Adding new user-------------------------
+           //  socket.on('new_user_added', function (data){ 
+           //    if(!(data.name.length === 0) )
+           //    {
+           //      $('#users').append("<div class='col-md-2' id='"+data.id+"'></div>");
+
+           //      $( "#"+data.id+"").fadeIn( "slow", function() {
+           //           $(this).html("<h4>"+
+           //                           data.name+
+           //                        "</h4>");
+           //       });
+           //      $('.alert-success').html("<p>"+data.name+"added to the room"+"</p>")
+           //    }   
+           //  });
+
+            //#---------------------User disconnected--------------------
+            socket.on('remove_user',function(data){
+              $('.alert-success').html("<p>"+data.user_name+" left  the room !!!"+"</p>")
+              $( "#"+data.id+"").fadeOut("slow",function(){
+              });
+            });
+
+           //  socket.on('all_users',function(data){
+           //   console.log(data.users);
+           //   for (var i = 0; i < data.users.length; i++) {
+           //    console.log( data.users[i].name);
+           //    $('#users').before('<h4><u>'+data.current_user+'<u></h4>')
+           //    $('#users').append("<div class='col-md-2' id='"+data.users[i].socket_id+"'>"+
+           //                        "</div>");
+           //      $( "#"+data.users[i].socket_id+"").html("<p>"+
+           //                           data.users[i].name+
+           //                         "</p>");
+           //     };
+           //   });
+
+           //  $('#chat').submit(function(e){
+           //      e.preventDefault();
+           //      var new_chat = $('#chat_topic').val();
+           //      socket.emit('new_chat',{message :  new_chat});
+           //      console.log(new_chat);
+           //  });
+
+           //  socket.on('add_new_chat',function(data){
+           //    $('.chats textarea').append("<strong>"+data.name+"</strong> says : "+data.chat+ new Date());
+           //  });
+        })
+
+        // setInterval(function display_time(){
+        //               time = new Date();
+        //               $('.time').text(time);}, 1000);
+    </script>
+</head>
+<body class="container">
+    <h1 class="page-header">Welcome to Chat Room</h1>
+    <h5 class="time"></h5>
+    <div class="row" id="users">
+    </div> 
+    <div class="alert-success">
+    </div>
+    
+    <div class="row conversation">
+      <div class="col-md-5">
+        <div class="chats well">
+          <h3 id="chat_name"><%= user_name%></h3>
+          <textarea></textarea>
+          <form id="chat" class="form-group">
+            <input name="chat_topic" id="chat_topic" class="form-control">
+            <input type="submit" value="Submit" class="btn btn-success">
+          </form>
+          <a href="/back" class="btn btn-danger">Back</a>
+      </div>
+    </div>
+
+    <!-- web page goes here -->
+</body>
+</html>

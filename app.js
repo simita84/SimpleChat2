@@ -3,11 +3,11 @@ var express = require("express");
 // path module -- try to figure out where and why we use this
 var path = require("path");
 // require body-parser
-//var bodyParser = require('body-parser');
+var bodyParser = require('body-parser');
 // create the express app
 var app = express();
 // use it!
-//app.use(bodyParser.urlencoded());
+app.use(bodyParser.urlencoded());
 // static content 
 app.use(express.static(path.join(__dirname, "./static")));
 // setting up ejs and our views folder
@@ -17,6 +17,12 @@ app.set('view engine', 'ejs');
 app.get('/', function(req, res) {
  res.render("index");
 })
+ 
+app.get('/back', function(request, response) {
+  var message ="Bye !!! see you later";
+  response.render("index",{message : message});
+})
+
 // post route for adding a user
 /*app.post('/users', function(req, res) {
  console.log("POST DATA", req.body);
@@ -33,87 +39,100 @@ var io = require('socket.io').listen(server);
 // notice we pass the server object<br>
 // Whenever a connection event happens (the connection event is built in) run the following code
  
+
+var chat_name; 
+app.post('/chat_room',function(request, response){
+  chat_name = request.body.name;
+  if(chat_name){
+    response.render('chat_room',{user_name:chat_name});
+  }
+  else
+  {
+    var message = "Please enter a name !!!";
+    response.render("index",{message : message});
+  }
+  
+})
  
-var all_users = new Array();
+var all_users    = new Array();
+//var all_messages = new Array();
 var count = 0;
 var user_info ;
-var index = 0;
+var index = 1;
+
+
 io.sockets.on('connection', function (socket) {
     //all the socket code goes in here!
-	
-  console.log("------\n-----------WE ARE USING SOCKETS!-----------");
- 
-  console.log(socket);
 
-  socket.session = "test";
-
+    
   // #1 - New user connected recieving event
+
 	socket.on("got_new_user", function (data){
-			//console.log(socket.id);
-			//console.log(data.user_name);
-			//console.log('Got New user --> ' + data.user_name +"  with id = "+socket.id);
-			new_user_info = {name :  data.user_name , id : socket.id }
-			
-			// Saving all the users 
-			console.log(socket.id );
-
-			//all_users[socket.id ] = data.user_name;
-
-			new_user_info = {
-		     socket_id:  socket.id ,
-		     name:  data.user_name,
-		     all_users_index: index
-			}
-
-			index = index+1;
-
-		  all_users.push(new_user_info);
-
-			// #-------sends data from the server to everyone 
-					//BUT the client that initiated the contact.
-			socket.broadcast.emit('add_user_window', {user_info: new_user_info});
-
-		  // #-- Emit: sends all_users from the server to the specific client who initiated contact.
-		  socket.emit('all_users', { user_info : all_users});
-	 
-
-		  //# Sends data to all connected clients when somebody leaves the room. 
-	    socket.on('disconnect', function () {
-
-	    	//console.log(socket.id);
-	    	console.log(all_users);
-	    
-		    //console.log(data.user_name +"disconnected--------");
-		   //  remove_user_info = {name :  data.user_name , id : socket.id }
-		      
-
-		  	// for (var i = 0; i < all_users.length; i++) {
-		  	// 	console.log("aray"+all_users[i].name);
-		  	// 	if(all_users[i].id === remove_user_info.id  ){
-		  	// 		console.log(all_users[i].id);
-		  	// 		all_users.slice(i,0);
-		  	// 	}
-		  	// }
-
-		  	// io.emit('remove_user', { user_info : remove_user_info});
-	    });
-
-	    socket.on('new_chat' , function(data){
-
-	    	console.log(data.message);
-	    	var user_name ;
-	    	for (var i = 0; i < all_users.length; i++) {
-		  	 
-		  		if(all_users[i].id === socket.id   ){
-		  			//console.log("matched=="+all_users[i].name);
-		  		 user_name =all_users[i].name;
-		  		}
-		  	}
-	    	io.emit('add_new_chat', {chat : data.message,name : user_name});
-	    });
-  	}); 
-
 		 
+		new_user_info = {
+	     socket_id   :  socket.id ,
+	     name        :  data.user_name
+		}
+
+	  socket.session_id = index;
+
+	  all_users[socket.session_id] = new_user_info;
+	  index++;
+    console.log("------Connecting-----------",data.user_name);
+
+    //Broadcast data from the server to everyone BUT the client that initiated the contact.
+    socket.broadcast.emit('new_user_connected', {user_details: new_user_info});
+
+    // Emit: sends data from the server to the specific client who initiated contact.
+    socket.emit('all_users', {existing_users: all_users});
+
+   //  //Broadcasting info of new client to all the existing clients
+	  // socket.broadcast.emit('new_user_added', {id:  socket.id , name:  data.user_name });
+
+	  // //Sending info of  all connected users to the newly connected client
+	  // console.log(all_users);
+	  // io.emit('all_users',{users :all_users,current_user :data.user_name});
+     //console.log("all users array"+all_users);
+	 });
+ 
+
+ //   // , coun#-------Listens to new chat
+			
+	// socket.on('new_chat' , function(data){
+ //  	console.log(data.message);
+ //  	console.log(  socket.session_id );
+ //  	user_name = all_users[socket.session_id].name;
+ //  	io.emit('add_new_chat', {chat : data.message,name : user_name});
+ //  });	
+// 
+
+  //Listens to disconnect event
+  socket.on('disconnect', function () {
+  	console.log("-----Disconnecting--------------");
+  	var user_array_index = socket.session_id;
+   
+    //Remove from UI and array
+  	if(user_array_index){
+      console.log("-----Disconnecting--------------");
+    	//console.log(all_users[user_array_index].name);
+    	var user_to_remove   = all_users[user_array_index].name; 
+    	var id 						   = all_users[user_array_index].socket_id;
+
+       //Remove from users array
+      all_users.splice(user_array_index, 1);
+
+    	console.log("-------"+user_to_remove+" with "+id+" removed --------");
+
+      
+    	//-------------Broadcast to everyone if someone is removed ----------------
+    	io.emit('remove_user', {user_name :user_to_remove, id :id});
+     }
+     //Verify all users are disconnected
+      console.log("all users array"+all_users);
+	});
+ 
+}); //---------------End of connection
+ 		 
 
    
 		//Server-side emit syntax
@@ -128,5 +147,4 @@ io.sockets.on('connection', function (socket) {
 		//io.emit('server_response', {response: "sockets are the best!"});
  
 
-})
- 
+
